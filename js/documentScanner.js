@@ -105,11 +105,11 @@ function processVideo() {
     );
 
     // Find the biggest contour
-    let poly = findBiggestContour(contours, 5000, 0.02);
+    let polyVector = findBiggestContour(contours, 5000, 0.02);
 
     // Show the biggest contour
     detected = src.clone();
-    cv.drawContours(detected, poly, -1, new cv.Scalar(255, 0, 0, 255), 3);
+    cv.drawContours(detected, polyVector, -1, new cv.Scalar(255, 0, 0, 255), 3);
     cv.imshow('canvas1', detected);
 
     // Get the transformation matrix only if detected contour is quadrilateral
@@ -118,12 +118,15 @@ function processVideo() {
       let matrix = createPerspectiveTransform(poly);
 
       // Apply the perspective transformation
+    if (isQuadrilateral(polyVector.get(0))) {
+      [transformed, matrix] = transformPerspective(polyVector.get(0));
       cv.warpPerspective(src, transformed, matrix, new cv.Size(width, height));
 
       // Show the transformed image
       cv.imshow('canvasOutput', transformed);
       matrix.delete();
       transformed.delete();
+      matrix.delete();
     }
 
     setTimeout(() => {
@@ -152,7 +155,7 @@ function calculateIntensityThresholds(
 function findBiggestContour(contours, minAreaThreshold, epsilon) {
   let maxArea = 0;
   let largestContourIndex = -1;
-  let poly = new cv.MatVector();
+  let polyVector = new cv.MatVector();
 
   for (let i = 0; i < contours.size(); ++i) {
     let contour = contours.get(i);
@@ -166,43 +169,14 @@ function findBiggestContour(contours, minAreaThreshold, epsilon) {
     if (area > maxArea && isQuadrilateral(tmp)) {
       maxArea = area;
       largestContourIndex = i;
-      poly.push_back(tmp);
+      polyVector.push_back(tmp);
     }
 
     tmp.delete();
     contour.delete();
   }
 
-  return poly;
-}
-
-// Perspective transformation - for quadrilateral polygons only
-function createPerspectiveTransform(poly, padding = 50) {
-  let lastContour = poly.get(0);
-  if (isQuadrilateral(lastContour)) {
-    let rect = getSortedCorners(lastContour);
-    let dstCorners = getDestinationCorners(padding, width, height);
-    let matrix = calculatePerspectiveMatrix(rect, dstCorners);
-    return matrix;
-  }
-}
-
-// Sorts corners of a quadrilateral
-function getSortedCorners(quad) {
-  let corners = [];
-  for (let i = 0; i < quad.rows; i++) {
-    corners.push({ x: quad.data32S[i * 2], y: quad.data32S[i * 2 + 1] });
-  }
-
-  // Sort by y-coordinate (top two first, then bottom two)
-  corners.sort((a, b) => a.y - b.y);
-
-  // Sort the top two by x-coordinate (leftmost first), and the bottom two by x-coordinate
-  let top = corners.slice(0, 2).sort((a, b) => a.x - b.x);
-  let bottom = corners.slice(2, 4).sort((a, b) => a.x - b.x);
-
-  // Return sorted corners: [top-left, top-right, bottom-right, bottom-left]
-  return [top[0], top[1], bottom[1], bottom[0]];
+  return polyVector;
 }
 
 // Checks if the contour is a quadrilateral
