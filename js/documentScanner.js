@@ -1,7 +1,7 @@
 let video = document.getElementById('videoInput');
-let canvas1 = document.getElementById('canvas1');
-let canvas = document.getElementById('canvasOutput');
-let context = canvas.getContext('2d');
+let previewCanvas = document.getElementById('previewCanvas');
+let previewCanvasContext = previewCanvas.getContext('2d');
+let areaText = document.getElementById('area');
 const constraints = {
   video: {
     facingMode: 'environment',
@@ -40,8 +40,6 @@ function startCamera() {
       // Set widths and heights of the video and canvas elements to be equal.
       width = video.videoWidth;
       height = video.videoHeight;
-      canvas.width = width;
-      canvas.height = height;
 
       processVideo();
     },
@@ -68,10 +66,10 @@ function processVideo() {
     if (!streaming) return;
 
     // Draw the video frame to the canvas
-    context.drawImage(video, 0, 0, width, height);
+    previewCanvasContext.drawImage(video, 0, 0, width, height);
 
     // Read the current frame from canvas
-    src.data.set(context.getImageData(0, 0, width, height).data);
+    src.data.set(previewCanvasContext.getImageData(0, 0, width, height).data);
 
     // Convert to grayscale
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
@@ -110,23 +108,17 @@ function processVideo() {
     // Show the biggest contour
     detected = src.clone();
     cv.drawContours(detected, polyVector, -1, new cv.Scalar(255, 0, 0, 255), 3);
-    cv.imshow('canvas1', detected);
+    cv.imshow(previewCanvas, detected);
 
-    // Get the transformation matrix only if detected contour is quadrilateral
-    if (isQuadrilateral(poly.get(0))) {
-      let transformed = new cv.Mat();
-      let matrix = createPerspectiveTransform(poly);
-
-      // Apply the perspective transformation
+    // Interactive polygons
     if (isQuadrilateral(polyVector.get(0))) {
-      [transformed, matrix] = transformPerspective(polyVector.get(0));
-      cv.warpPerspective(src, transformed, matrix, new cv.Size(width, height));
+      // Stop Streaming
+      streaming = false;
+      setupInteractivePolygon(src, polyVector.get(0));
 
-      // Show the transformed image
-      cv.imshow('canvasOutput', transformed);
-      matrix.delete();
-      transformed.delete();
-      matrix.delete();
+      // Calculate area of the quadrilateral
+      let area = cv.contourArea(polyVector.get(0));
+      areaText.innerHTML = `Area: ${area.toFixed(2)} px`;
     }
 
     setTimeout(() => {
@@ -182,33 +174,6 @@ function findBiggestContour(contours, minAreaThreshold, epsilon) {
 // Checks if the contour is a quadrilateral
 function isQuadrilateral(contour) {
   return contour && contour.rows === 4;
-}
-
-// Calculates destination corners
-function getDestinationCorners(padding, width, height) {
-  return [
-    { x: padding, y: padding }, // Top-left
-    { x: width - padding, y: padding }, // Top-right
-    { x: width - padding, y: height - padding }, // Bottom-right
-    { x: padding, y: height - padding }, // Bottom-left
-  ];
-}
-
-// Calculates perspecive matrix
-function calculatePerspectiveMatrix(srcCorners, dstCorners) {
-  let srcMat = cv.matFromArray(4, 1, cv.CV_32FC2, flattenCorners(srcCorners));
-  let dstMat = cv.matFromArray(4, 1, cv.CV_32FC2, flattenCorners(dstCorners));
-
-  let matrix = cv.getPerspectiveTransform(srcMat, dstMat);
-
-  srcMat.delete();
-  dstMat.delete();
-
-  return matrix;
-}
-
-function flattenCorners(corners) {
-  return corners.reduce((arr, corner) => arr.concat([corner.x, corner.y]), []);
 }
 
 window.onOpenCvReady = onOpenCvReady;

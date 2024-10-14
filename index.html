@@ -8,11 +8,15 @@
 <body>
   <div class="container">
     <video id="videoInput" autoplay loop muted playsinline width="640" height="480" autoplay></video>
-    <canvas id="canvas1" width="640" height="480"></canvas>
-    <canvas id="canvasOutput"></canvas>
+    <canvas id="previewCanvas" width="640" height="480"></canvas>
+    <canvas id="interactiveCanvas" width="640" height="480"></canvas>
+    <canvas id="transformedCanvas"></canvas>
+<p id="area"></p>
   </div>
 
   <script async src="https://docs.opencv.org/4.5.5/opencv.js" onload="onOpenCvReady();"></script>
+<script src="./js/utils.js"></script>
+  <script src="./js/interactivePolygon.js"></script>
 <script src="./js/perspectiveTransformator.js"></script>  
   <script src="./js/documentScanner.js"></script>
 </body>

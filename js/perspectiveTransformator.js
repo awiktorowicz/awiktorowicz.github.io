@@ -15,24 +15,6 @@ function createPerspectiveTransform(polyCorners, padding = 50) {
   return matrix;
 }
 
-// Sorts corners of a quadrilateral
-function getSortedCorners(quad) {
-  let corners = [];
-  for (let i = 0; i < quad.rows; i++) {
-    corners.push({ x: quad.data32S[i * 2], y: quad.data32S[i * 2 + 1] });
-  }
-
-  // Sort by y-coordinate (top two first, then bottom two)
-  corners.sort((a, b) => a.y - b.y);
-
-  // Sort the top two by x-coordinate (leftmost first), and the bottom two by x-coordinate
-  let top = corners.slice(0, 2).sort((a, b) => a.x - b.x);
-  let bottom = corners.slice(2, 4).sort((a, b) => a.x - b.x);
-
-  // Return sorted corners: [top-left, top-right, bottom-right, bottom-left]
-  return [top[0], top[1], bottom[1], bottom[0]];
-}
-
 // Calculates perspecive matrix
 function calculatePerspectiveMatrix(srcCorners, dstCorners) {
   let srcMat = cv.matFromArray(4, 1, cv.CV_32FC2, flattenCorners(srcCorners));
