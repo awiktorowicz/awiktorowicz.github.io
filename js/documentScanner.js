@@ -2,6 +2,9 @@ let video = document.getElementById('videoInput');
 let previewCanvas = document.getElementById('previewCanvas');
 let previewCanvasContext = previewCanvas.getContext('2d');
 let areaText = document.getElementById('area');
+let assistantCanvas = document.getElementById('assistantCanvas');
+let assistantCanvasContext = assistantCanvas.getContext('2d');
+
 const constraints = {
   video: {
     facingMode: 'environment',
@@ -11,7 +14,10 @@ let streaming = false;
 let width = null;
 let height = null;
 
-const FPS = 10;
+const minArea = 45000;
+const maxArea = 110000;
+
+const FPS = 5;
 
 function onOpenCvReady() {
   console.log('OpenCV.js is ready');
@@ -65,6 +71,16 @@ function processVideo() {
   function captureFrame() {
     if (!streaming) return;
 
+    // Display guidance frames
+    displayGuidanceFrames(
+      src,
+      assistantCanvas,
+      minArea,
+      maxArea,
+      'cccccc',
+      'cccccc',
+    );
+
     // Draw the video frame to the canvas
     previewCanvasContext.drawImage(video, 0, 0, width, height);
 
@@ -103,7 +119,7 @@ function processVideo() {
     );
 
     // Find the biggest contour
-    let polyVector = findBiggestContour(contours, 5000, 0.02);
+    let polyVector = findBiggestContour(contours, 10000, 0.02);
 
     // Show the biggest contour
     detected = src.clone();
@@ -112,13 +128,15 @@ function processVideo() {
 
     // Interactive polygons
     if (isQuadrilateral(polyVector.get(0))) {
+      let isValidContour = validateContour(polyVector.get(0), minArea, maxArea);
+
+      if (isValidContour) {
       // Stop Streaming
       streaming = false;
       setupInteractivePolygon(src, polyVector.get(0));
-
-      // Calculate area of the quadrilateral
-      let area = cv.contourArea(polyVector.get(0));
-      areaText.innerHTML = `Area: ${area.toFixed(2)} px`;
+      }
+    } else {
+      updateFeedbackParagraph('Object not detected.');
     }
 
     setTimeout(() => {
