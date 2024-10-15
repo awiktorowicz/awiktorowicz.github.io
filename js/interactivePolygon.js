@@ -6,7 +6,7 @@ let interactiveCanvasContext = interactiveCanvas.getContext('2d');
 let transformedCanvas = document.getElementById('transformedCanvas');
 
 function setupInteractivePolygon(src, polyCorners) {
-  const corners = getSortedCorners(polyCorners);
+  const corners = getFourMostDistantPoints(polyCorners);
   const pointRadius = 10;
   let selectedPoint = null;
 

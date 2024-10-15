@@ -9,7 +9,7 @@ function transformPerspective(poly) {
 
 // Perspective transformation - for quadrilateral polygons only
 function createPerspectiveTransform(polyCorners, padding = 50) {
-  let rect = getSortedCorners(polyCorners);
+  let rect = getFourMostDistantPoints(polyCorners);
   let dstCorners = getDestinationCorners(padding, width, height);
   let matrix = calculatePerspectiveMatrix(rect, dstCorners);
   return matrix;
