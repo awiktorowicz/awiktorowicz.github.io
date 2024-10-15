@@ -17,11 +17,11 @@ function displayGuidanceFrames(
   colorMax,
 ) {
   cv.imshow(outputCanvas, src);
-  smallFrameCorners = drawCardFrame(outputCanvas, minArea, colorMin);
-  bigFrameCorners = drawCardFrame(outputCanvas, maxArea, colorMax);
+  smallFrameCorners = drawCardFrame(outputCanvas, minArea, colorMin, false);
+  bigFrameCorners = drawCardFrame(outputCanvas, maxArea, colorMax, true);
 }
 
-function drawCardFrame(outputCanvas, area, color) {
+function drawCardFrame(outputCanvas, area, color, isVisible) {
   const ctx = outputCanvas.getContext('2d');
 
   // Define credit card dimensions (proportional to a typical credit card)
@@ -43,6 +43,7 @@ function drawCardFrame(outputCanvas, area, color) {
   const x = centerX - cardWidth / 2;
   const y = centerY - cardHeight / 2;
 
+  if (isVisible) {
   // Draw the credit card placeholder (rounded rectangle)
   ctx.beginPath();
   ctx.moveTo(x + cornerRadius, y);
@@ -65,6 +66,7 @@ function drawCardFrame(outputCanvas, area, color) {
   ctx.strokeStyle = `#${color}`; // Darker outline
   ctx.lineWidth = 3;
   ctx.stroke();
+  }
 
   // Return the corner coordinates
   // Top-Left, Top-Right, Bottom-Right, Bottom-Left
