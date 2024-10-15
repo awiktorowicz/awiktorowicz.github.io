@@ -2,6 +2,12 @@ let feedbackParagraph = document.getElementById('feedbackParagraph');
 let smallFrameCorners = null;
 let bigFrameCorners = null;
 
+let holdStartTime = null;
+let holdDuration = 2000;
+let isWithinRange = false;
+
+let contourCorners = null;
+
 function displayGuidanceFrames(
   src,
   outputCanvas,
@@ -73,14 +79,12 @@ function drawCardFrame(outputCanvas, area, color) {
 }
 
 function validateContour(contour, minArea, maxArea) {
-  console.log('Checking');
-
   // Validate Area
   let isAreaInRange = validateArea(contour, minArea, maxArea);
 
   // Validate Position
   if (!isAreaInRange) return false;
-  let contourCorners = getFourMostDistantPoints(contour);
+  contourCorners = getFourMostDistantPoints(contour);
   let isPositionInRange = validatePosition(
     contourCorners,
     smallFrameCorners,
@@ -119,12 +123,12 @@ function validatePosition(contourCorners, smallFrameCorners, bigFrameCorners) {
 
   // Check left-right
   if (contourBounds.minX < bigFrameBounds.minX) {
-    updateFeedbackParagraph('Move right');
+    updateFeedbackParagraph('Move left');
     return false;
   }
 
   if (contourBounds.bigX > bigFrameBounds.maxX) {
-    updateFeedbackParagraph('Move left');
+    updateFeedbackParagraph('Move right');
     return false;
   }
 
@@ -140,6 +144,28 @@ function validatePosition(contourCorners, smallFrameCorners, bigFrameCorners) {
   }
 
   return true;
+}
+
+function monitorCardPosition(contour, minArea, maxArea) {
+  const isCurrentlyWithinRange = validateContour(contour, minArea, maxArea);
+
+  if (isCurrentlyWithinRange) {
+    if (!isWithinRange) {
+      isWithinRange = true;
+      holdStartTime = Date.now();
+    } else {
+      const currentTime = Date.now();
+      if (currentTime - holdStartTime >= holdDuration) {
+        updateFeedbackParagraph('Card held within range for 2 seconds!');
+        return true;
+      }
+    }
+  } else {
+    isWithinRange = false;
+    holdStartTime = null;
+    // updateFeedbackParagraph('Card moved outside the range. Timer reset.');
+  }
+  return false;
 }
 
 function getContourBounds(contourCorners) {

@@ -15,9 +15,9 @@ let width = null;
 let height = null;
 
 const minArea = 45000;
-const maxArea = 110000;
+const maxArea = 80000;
 
-const FPS = 5;
+const FPS = 10;
 
 function onOpenCvReady() {
   console.log('OpenCV.js is ready');
@@ -54,6 +54,8 @@ function startCamera() {
 
   width = video.width;
   height = video.height;
+  assistantCanvas.width = width;
+  assistantCanvas.height = height;
 }
 
 function processVideo() {
@@ -122,18 +124,22 @@ function processVideo() {
     let polyVector = findBiggestContour(contours, 10000, 0.02);
 
     // Show the biggest contour
-    detected = src.clone();
+    detected = cv.imread(assistantCanvas);
     cv.drawContours(detected, polyVector, -1, new cv.Scalar(255, 0, 0, 255), 3);
-    cv.imshow(previewCanvas, detected);
+    cv.imshow(assistantCanvas, detected);
 
     // Interactive polygons
     if (isQuadrilateral(polyVector.get(0))) {
-      let isValidContour = validateContour(polyVector.get(0), minArea, maxArea);
+      let isValidContour = monitorCardPosition(
+        polyVector.get(0),
+        minArea,
+        maxArea,
+      );
 
       if (isValidContour) {
-      // Stop Streaming
-      streaming = false;
-      setupInteractivePolygon(src, polyVector.get(0));
+        // Stop Streaming
+        streaming = false;
+        setupInteractivePolygon(src, polyVector.get(0));
       }
     } else {
       updateFeedbackParagraph('Object not detected.');
@@ -176,6 +182,7 @@ function findBiggestContour(contours, minAreaThreshold, epsilon) {
     cv.approxPolyDP(contour, tmp, epsilon * peri, true);
 
     // Push only quadrilateral polygons
+    // TODO: Check without isQuad
     if (area > maxArea && isQuadrilateral(tmp)) {
       maxArea = area;
       largestContourIndex = i;
