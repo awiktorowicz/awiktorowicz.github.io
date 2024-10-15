@@ -127,7 +127,7 @@ function validatePosition(contourCorners, smallFrameCorners, bigFrameCorners) {
     return false;
   }
 
-  if (contourBounds.bigX > bigFrameBounds.maxX) {
+  if (contourBounds.maxX > bigFrameBounds.maxX) {
     updateFeedbackParagraph('Move right');
     return false;
   }
