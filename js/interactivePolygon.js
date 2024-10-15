@@ -1,14 +1,16 @@
 //TODO: Change polyCorners to polyMat to reduce confusion
 
-let interactiveCanvas = document.getElementById('interactiveCanvas');
+let interactiveCanvas = document.getElementById('outputCanvas');
 let interactiveCanvasContext = interactiveCanvas.getContext('2d');
 
 let transformedCanvas = document.getElementById('transformedCanvas');
+let acceptButton = document.getElementById('acceptButton');
 
 function setupInteractivePolygon(src, polyCorners) {
   const corners = getFourMostDistantPoints(polyCorners);
   const pointRadius = 10;
   let selectedPoint = null;
+  acceptButton.style.display = 'block';
 
   draw();
 
@@ -64,7 +66,6 @@ function setupInteractivePolygon(src, polyCorners) {
 
   function handleMouseUp() {
     selectedPoint = null;
-    updatePolygon();
   }
 
   function handleTouchStart(event) {
@@ -86,7 +87,6 @@ function setupInteractivePolygon(src, polyCorners) {
 
   function handleTouchEnd() {
     selectedPoint = null;
-    updatePolygon();
   }
 
   function getMousePos(event) {
@@ -115,8 +115,6 @@ function setupInteractivePolygon(src, polyCorners) {
   }
 
   function updatePolygon() {
-    let transformed = new cv.Mat();
-
     // Convert the points to cv.Point format
     let polyArray = corners.map((corner) => new cv.Point(corner.x, corner.y));
 
@@ -128,12 +126,16 @@ function setupInteractivePolygon(src, polyCorners) {
       polyArray.flatMap((p) => [p.x, p.y]),
     );
 
+    displayTransformedImage(polygonMat);
+  }
+
+  function displayTransformedImage(polygonMat) {
     // Apply the perspective transformation
     [transformed, matrix] = transformPerspective(polygonMat);
     cv.warpPerspective(src, transformed, matrix, new cv.Size(width, height));
 
     // Show the transformed image
-    cv.imshow(transformedCanvas, transformed);
+    cv.imshow(interactiveCanvas, transformed);
     matrix.delete();
     transformed.delete();
   }
@@ -145,4 +147,6 @@ function setupInteractivePolygon(src, polyCorners) {
   interactiveCanvas.addEventListener('touchstart', handleTouchStart);
   interactiveCanvas.addEventListener('touchmove', handleTouchMove);
   interactiveCanvas.addEventListener('touchend', handleTouchEnd);
+
+  acceptButton.addEventListener('click', updatePolygon);
 }

@@ -6,13 +6,11 @@
   <link rel="stylesheet" href="./css/style.css"/>
 </head>
 <body>
-  <div class="container">
-    <video id="videoInput" autoplay loop muted playsinline width="640" height="480" autoplay hidden></video>
-    <canvas id="assistantCanvas"></canvas>
+    <video id="videoInput" autoplay loop muted playsinline autoplay hidden></video>
+    <div id="container">
+      <canvas id="outputCanvas"></canvas>
     <p id="feedbackParagraph"></p>
-    <canvas id="previewCanvas" width="640" height="480" hidden></canvas>
-    <canvas id="interactiveCanvas" width="640" height="480"></canvas>
-    <canvas id="transformedCanvas"></canvas>
+      <button id="acceptButton" style="display: none;">Accept</button>
   </div>
 
   <script async src="https://docs.opencv.org/4.5.5/opencv.js" onload="onOpenCvReady();"></script>

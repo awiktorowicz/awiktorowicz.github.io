@@ -1,9 +1,6 @@
 let video = document.getElementById('videoInput');
-let previewCanvas = document.getElementById('previewCanvas');
-let previewCanvasContext = previewCanvas.getContext('2d');
-let areaText = document.getElementById('area');
-let assistantCanvas = document.getElementById('assistantCanvas');
-let assistantCanvasContext = assistantCanvas.getContext('2d');
+let outputCanvas = document.getElementById('outputCanvas');
+let outputCanvasContext = outputCanvas.getContext('2d');
 
 const constraints = {
   video: {
@@ -14,8 +11,8 @@ let streaming = false;
 let width = null;
 let height = null;
 
-const minArea = 45000;
-const maxArea = 80000;
+const minArea = 25000;
+const maxArea = 50000;
 
 const FPS = 10;
 
@@ -42,20 +39,29 @@ function startCamera() {
       if (!streaming) {
         return;
       }
+      // Calculate the aspect ratio of the video
+      const aspectRatio = video.videoWidth / video.videoHeight;
 
-      // Set widths and heights of the video and canvas elements to be equal.
-      width = video.videoWidth;
-      height = video.videoHeight;
+      // Set canvas size based on viewport dimensions while maintaining the video aspect ratio
+      let canvasWidth = window.innerWidth;
+      let canvasHeight = window.innerWidth / aspectRatio;
+
+      // If the calculated height exceeds the screen height, resize based on height
+      if (canvasHeight > window.innerHeight) {
+        canvasHeight = window.innerHeight;
+        canvasWidth = canvasHeight * aspectRatio;
+      }
+
+      height = canvasHeight;
+      width = canvasWidth;
+
+      outputCanvas.width = width;
+      outputCanvas.height = height;
 
       processVideo();
     },
     false,
   );
-
-  width = video.width;
-  height = video.height;
-  assistantCanvas.width = width;
-  assistantCanvas.height = height;
 }
 
 function processVideo() {
@@ -73,21 +79,21 @@ function processVideo() {
   function captureFrame() {
     if (!streaming) return;
 
+    // Draw the video frame to the canvas
+    outputCanvasContext.drawImage(video, 0, 0, width, height);
+
+    // Read the current frame from canvas
+    src.data.set(outputCanvasContext.getImageData(0, 0, width, height).data);
+
     // Display guidance frames
     displayGuidanceFrames(
       src,
-      assistantCanvas,
+      outputCanvas,
       minArea,
       maxArea,
       'cccccc',
       'cccccc',
     );
-
-    // Draw the video frame to the canvas
-    previewCanvasContext.drawImage(video, 0, 0, width, height);
-
-    // Read the current frame from canvas
-    src.data.set(previewCanvasContext.getImageData(0, 0, width, height).data);
 
     // Convert to grayscale
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
@@ -124,9 +130,9 @@ function processVideo() {
     let polyVector = findBiggestContour(contours, 10000, 0.02);
 
     // Show the biggest contour
-    detected = cv.imread(assistantCanvas);
+    detected = cv.imread(outputCanvas);
     cv.drawContours(detected, polyVector, -1, new cv.Scalar(255, 0, 0, 255), 3);
-    cv.imshow(assistantCanvas, detected);
+    cv.imshow(outputCanvas, detected);
 
     // Interactive polygons
     if (isQuadrilateral(polyVector.get(0))) {
